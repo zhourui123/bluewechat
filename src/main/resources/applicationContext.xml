@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+				http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+				http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd">
+	<!-- 扫描properties文件 -->
+	<context:property-placeholder location="WEB-INF/jdbc.properties" />
+	<context:annotation-config />
+	<!-- 扫描@component文件 -->
+	<context:component-scan base-package="cn.zr.ssmproj.*" />
+
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+		destroy-method="close">
+		<property name="driverClass" value="${jdbc.driverClassName}" />
+		<property name="jdbcUrl" value="${jdbc.url}" />
+		<property name="user" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+		<property name="initialPoolSize" value="3" />
+		<property name="minPoolSize" value="3" />
+		<property name="maxPoolSize" value="5" />
+		<property name="acquireIncrement" value="3" />
+		<property name="maxIdleTime" value="1800" />
+	</bean>
+	<!--<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" 
+		destroy-method="close"> <property name="driverClass" value="oracle.jdbc.OracleDriver" 
+		/> <property name="jdbcUrl" value="jdbc:oracle:thin:@127.0.0.1:1521:orcl" 
+		/> <property name="user" value="scott" /> <property name="password" value="scott" 
+		/> <property name="initialPoolSize" value="3" /> <property name="minPoolSize" 
+		value="3" /> <property name="maxPoolSize" value="5" /> <property name="acquireIncrement" 
+		value="3" /> <property name="maxIdleTime" value="1800" /> </bean> -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<!-- 自动扫描mapping.xml文件 -->
+		<property name="mapperLocations" value="classpath*:cn/zr/ssmproj/model/mapper/*.xml"></property>
+	</bean>
+
+	<!-- 4.配置扫描Dao接口包，动态实现Dao接口，注入到spring容器中 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<!-- 注入sqlSessionFactory -->
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+		<!-- 给出需要扫描Dao接口包 -->
+		<property name="basePackage" value="cn.zr.ssmproj.dao"></property>
+	</bean>
+
+	<!-- 配置下面的就可以使用注解实现事务管理 -->
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	<tx:annotation-driven transaction-manager="transactionManager" />
+</beans>
